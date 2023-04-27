@@ -85,18 +85,12 @@ backward <- step(fit.all, direction='backward')
 summary(backward)
 ```
 ```{r}
-#day1$cnt <- log(day1$cnt)
+day1$cnt <- log(day1$cnt)
 mod_forward <- lm(formula = cnt ~ temp + hr + yr + hum + season + holiday + 
     windspeed + weathersit + workingday, data = day1)
 plot(mod_forward, which = c(1,2,3,4))
 ```
 ```{r}
-mod_backward <- lm(formula = cnt ~ season + yr + hr + holiday + workingday + 
-    weathersit + temp + hum + windspeed, data = day1)
-plot(mod_backward, which = c(1,2,3,4))
-```
-```{r}
-day1$cnt <- log(day1$cnt)
 mod_backward <- lm(formula = cnt ~ season + yr + hr + holiday + workingday + 
     weathersit + temp + hum + windspeed, data = day1)
 plot(mod_backward, which = c(1,2,3,4))
@@ -111,10 +105,7 @@ library(car)
 ncvTest(fit.all)
 ```
 
-```{r, include=TRUE}
-backward <- step(fit.all, direction='backward')
-summary(backward)
-```
+
 
 ```{r, include=TRUE}
 library(plyr)
@@ -153,6 +144,11 @@ cat('Root Mean Squared Error:', rmse_value, '\n')
 
 
 ```
+```{r}
+plot(cnt ~ temp + hr + yr + hum + season + holiday + 
+    windspeed + weathersit + workingday, data = day1)
+```
+
 ```{r, include=TRUE}
 day2 <- day1[ , -which(names(day1) == "cnt")]
 pca <- prcomp(day2,scale=TRUE)
@@ -190,6 +186,13 @@ mse <- mean((test_set$cnt - predictions)^2)
 r_squared <- 1 - (sum((test_set$cnt - predictions)^2) / sum((test_set$cnt - mean(test_set$cnt))^2))
 summary(predictions)
 ```
+```{r}
+r_squared
+mae
+mse
+
+```
+
 
 
 
