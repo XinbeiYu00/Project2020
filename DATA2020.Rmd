@@ -42,18 +42,18 @@ melted_upper <- melt(upper, na.rm=TRUE)
 
 ggplot(data = melted_upper, aes(Var2, Var1, fill = value))+
  geom_tile(color = "white")+
- scale_fill_gradient2(low = "brown", high = "wheat", mid = "white", 
+ scale_fill_gradient2(low = "yellow", high = "brown", mid = "white", 
    midpoint = 0, limit = c(-1,1), space = "Lab") +
   theme(
   axis.text.x = element_text(angle = 45, vjust = 1, 
-    size = 8, hjust = 1),
+    size = 4, hjust = 1),
   axis.title.x = element_blank(),
   axis.title.y = element_blank(),
   panel.grid.major = element_blank(),
   panel.border = element_blank(),
   panel.background = element_blank(),
   axis.ticks = element_blank())+
-  geom_text(aes(Var2, Var1, label = value), color = "gray", size = 5) +
+  geom_text(aes(Var2, Var1, label = value), color = "gray", size = 3) +
   coord_fixed() +
   labs(fill='correlation') 
 ```
@@ -84,6 +84,84 @@ summary(forward)
 backward <- step(fit.all, direction='backward')
 summary(backward)
 ```
+```{r}
+library(glmnet)
+day2 <- day1 %>% dplyr::select(-c(casual, registered))
+#day2
+day2$cnt <- log(day2$cnt)
+#day2
+x <- model.matrix(day2$cnt~., day2)[,-1]
+y <- day2 %>% dplyr::select(cnt) %>% unlist() %>% as.numeric()
+
+#y
+grid <- 10^seq(2, -3, by=-.1)
+
+train <- day2 %>% sample_frac(0.8)
+test <- day2 %>% setdiff(train)
+
+x_train <- model.matrix(train$cnt~., train)[,-1]
+x_test <- model.matrix(test$cnt~., test)[,-1]
+cnt <- day2$cnt
+#cnt
+y_train <- train %>% dplyr::select(cnt) %>% unlist() %>% as.numeric()
+y_test <- test %>% dplyr::select(cnt) %>% unlist() %>% as.numeric()
+set.seed(1)
+
+#on the full model
+out <- glmnet(x, y, alpha = 1, lambda = grid) 
+
+#cv to choose best lambda
+cv.out <- cv.glmnet(x_train, y_train, alpha = 1) 
+bestlam <- cv.out$lambda.min 
+cat('Best lambda obtained is: ', bestlam)
+
+#lasso with best lambda
+lasso <- glmnet(x, y, alpha = 1, lambda = bestlam)
+predictions <- predict(lasso, type = "coefficients", s = bestlam)
+#coef(lasso, s=bestlam)
+
+#remove intercept
+lasso.mod <- glmnet(x,y, alpha =1)
+beta <- coef(lasso.mod)
+beta <- as.matrix(beta)
+dim(beta)
+lambda <- lasso.mod$lambda
+length(lambda)
+lam <- rep(lambda, 11)
+length(lam)
+beta_t <- t(beta)
+beta_vec <- as.vector(beta_t)[-c(1:64)]
+length(beta_vec)
+v <- rownames(beta)[-1]
+length(v)
+names <- rep(v, each=64)
+length(beta_vec)
+length(names)
+df <- data.frame(lam, names, beta_vec)
+plot <- ggplot(df, aes(x = lam, y = beta_vec, color = names)) +
+  geom_line() +
+  labs(x = "log(lambda)", y = "Coefficient") +
+  theme_bw() +
+  scale_x_continuous(trans='log10')
+
+plot + ggtitle('Lasso coefficients vs. lambda')
+```
+```{r}
+#x_test
+lasso_pred <- predict(lasso, newx = x_test, s = bestlam)
+#y_test
+
+lasso_pred
+mae <- mean(abs(y_test - lasso_pred))
+mse <- mean((y_test - lasso_pred)^2)
+r_squared <- 1 - (sum((y_test- lasso_pred)^2) / sum((y_test - mean(y_test))^2))
+mae
+mse1
+r_squared
+```
+
+
+
 ```{r}
 day1$cnt <- log(day1$cnt)
 mod_forward <- lm(formula = cnt ~ temp + hr + yr + hum + season + holiday + 
