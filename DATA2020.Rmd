@@ -9,14 +9,35 @@ This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute
 ```{r}
 day = read.csv("/Users/Murphy1/Desktop/DATA2020/Project2020/data/hour.csv", header = TRUE)
 head(day)
+day2 <- head(day, 8646)
+
+plot <- ggplot(data = day2, aes(x = day2$dteday, y = day2$cnt)) +
+  geom_point(color = "brown") + 
+  xlab('date') +ylab('count')
+plot +  theme(axis.ticks.x=element_blank(),
+              axis.text.x=element_blank()) + 
+  ggtitle('check seasonaility')
+  
 ```
 ```{r, include=TRUE}
 library(dplyr)
-
+library(RColorBrewer)
 #select variables season, workingday, weathersit, temp, atemp, hum, windspeed
 day1 <- dplyr::select(day, -c(instant, dteday))
 head(day1)
+plot <- ggplot(data = day1, aes(x = season, y = cnt, color = factor(day1$season)))
+plot + geom_boxplot() + scale_color_brewer(palette = "YlOrBr") + 
+  ylab('count') + ggtitle('count vs. seasonality')
 ```
+```{r}
+plot <- ggplot(day1, aes(x = day1$cnt)) + 
+  geom_histogram(aes(y = ..density..), bins = 30, fill = "wheat") +
+  geom_density(color = "brown") + xlab('count')
+plot + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  ggtitle('distribution of count')
+```
+
 ```{r, include=TRUE}
 library(pheatmap)
 library(ggplot2)
@@ -42,7 +63,7 @@ melted_upper <- melt(upper, na.rm=TRUE)
 
 ggplot(data = melted_upper, aes(Var2, Var1, fill = value))+
  geom_tile(color = "white")+
- scale_fill_gradient2(low = "yellow", high = "brown", mid = "white", 
+ scale_fill_gradient2(low = "wheat", high = "brown", mid = "white", 
    midpoint = 0, limit = c(-1,1), space = "Lab") +
   theme(
   axis.text.x = element_text(angle = 45, vjust = 1, 
@@ -53,9 +74,10 @@ ggplot(data = melted_upper, aes(Var2, Var1, fill = value))+
   panel.border = element_blank(),
   panel.background = element_blank(),
   axis.ticks = element_blank())+
-  geom_text(aes(Var2, Var1, label = value), color = "gray", size = 3) +
+  geom_text(aes(Var2, Var1, label = value), color = "gray", size = 2.8) +
   coord_fixed() +
-  labs(fill='correlation') 
+  labs(fill='correlation')  + ggtitle('correlation heatmap')
+
 ```
 
 
@@ -226,6 +248,8 @@ cat('Root Mean Squared Error:', rmse_value, '\n')
 plot(cnt ~ temp + hr + yr + hum + season + holiday + 
     windspeed + weathersit + workingday, data = day1)
 ```
+
+
 
 ```{r, include=TRUE}
 day2 <- day1[ , -which(names(day1) == "cnt")]
